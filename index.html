@@ -10,9 +10,9 @@
 <body style="margin: 0; padding: 0;">
 
     <!-- A-Frameシーン -->
-    <a-scene embedded arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3">
-        <!-- 家具の3Dモデル。初期状態では非表示 -->
-        <a-entity id="simplelowtable" gltf-model="url(/models/simplelowtable.glb)" scale="1 1 1" position="0 0 -5" visible="false" class="movable"></a-entity>
+    <a-scene embedded arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3" cursor="rayOrigin: mouse">
+        <!-- 家具の3Dモデル。クリック可能にする -->
+        <a-entity id="simplelowtable" class="clickable" gltf-model="url(./models/simplelowtable.glb)" scale="0.5 0.5 0.5" position="0 0 -5" visible="false"></a-entity>
 
         <!-- カメラ -->
         <a-entity camera></a-entity>
@@ -20,53 +20,40 @@
 
     <!-- 家具を表示するボタン -->
     <button id="show-model-btn" style="position: absolute; top: 10px; left: 10px; z-index: 10;">
-        Show Simple Low Table 1
+        Show Simple Low Table
     </button>
 
-    <!-- 家具の表示を制御し、タッチ操作で移動させるスクリプト -->
+    <!-- 家具のドラッグ＆ドロップ制御スクリプト -->
     <script>
-        // ボタンと3Dモデルの要素を取得
         let button = document.getElementById('show-model-btn');
         let furniture = document.getElementById('simplelowtable');
+        let isDragging = false;  // ドラッグ中かどうかを判定
+        let sceneEl = document.querySelector('a-scene');
 
-        // 家具を表示する
+        // ボタンクリックで3Dモデルを表示
         button.addEventListener('click', function () {
             furniture.setAttribute('visible', true);
         });
 
-        // タッチイベントのリスナーを追加して家具を移動
-        let isDragging = false;
-        let initialTouchPos = { x: 0, y: 0 };
-
-        furniture.addEventListener('touchstart', function (event) {
-            isDragging = true;
-            let touch = event.touches[0];
-            initialTouchPos = { x: touch.clientX, y: touch.clientY };
+        // Raycasterでオブジェクトをクリックしたときの動作
+        furniture.addEventListener('mousedown', function () {
+            isDragging = true;  // ドラッグ開始
         });
 
-        furniture.addEventListener('touchmove', function (event) {
-            if (!isDragging) return;
-
-            let touch = event.touches[0];
-            let deltaX = touch.clientX - initialTouchPos.x;
-            let deltaY = touch.clientY - initialTouchPos.y;
-
-            // 現在のモデル位置を取得
-            let position = furniture.getAttribute('position');
-
-            // XおよびY座標を更新（Z軸はそのまま）
-            position.x += deltaX * 0.01;  // 0.01は移動スピードの調整
-            position.y -= deltaY * 0.01;
-
-            // 新しい位置を設定
-            furniture.setAttribute('position', position);
-
-            // タッチ位置を更新
-            initialTouchPos = { x: touch.clientX, y: touch.clientY };
+        window.addEventListener('mouseup', function () {
+            isDragging = false;  // ドラッグ終了
         });
 
-        furniture.addEventListener('touchend', function () {
-            isDragging = false;
+        // マウスを移動したときにオブジェクトを追従させる
+        sceneEl.addEventListener('mousemove', function (event) {
+            if (isDragging) {
+                // マウスの位置を取得して家具の位置を更新
+                let intersection = sceneEl.components.cursor.getIntersection(furniture);
+                if (intersection) {
+                    let newPos = intersection.point;  // マウスの位置
+                    furniture.setAttribute('position', newPos);  // 家具の位置を更新
+                }
+            }
         });
     </script>
 
