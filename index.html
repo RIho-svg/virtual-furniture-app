@@ -10,9 +10,16 @@
 <body style="margin: 0; padding: 0;">
 
     <!-- A-Frameシーン -->
-    <a-scene embedded arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3" cursor="rayOrigin: mouse">
-        <!-- 家具の3Dモデル。クリック可能にする -->
-        <a-entity id="simplelowtable" class="clickable" gltf-model="url(./models/simplelowtable.glb)" scale="0.5 0.5 0.5" position="0 0 -5" visible="false"></a-entity>
+    <a-scene 
+        embedded
+        arjs="sourceType: camera; debugUIEnabled: false;">
+        <!-- 家具の3Dモデル -->
+        <a-entity 
+            id="simplelowtable"
+            gltf-model="url(./models/simplelowtable.glb)"
+            scale="0.5 0.5 0.5"
+            visible="false">
+        </a-entity>
 
         <!-- カメラ -->
         <a-entity camera></a-entity>
@@ -20,40 +27,25 @@
 
     <!-- 家具を表示するボタン -->
     <button id="show-model-btn" style="position: absolute; top: 10px; left: 10px; z-index: 10;">
-        Show Simple Low Table
+        シンプルなローテーブルを表示
     </button>
 
-    <!-- 家具のドラッグ＆ドロップ制御スクリプト -->
     <script>
         let button = document.getElementById('show-model-btn');
         let furniture = document.getElementById('simplelowtable');
-        let isDragging = false;  // ドラッグ中かどうかを判定
-        let sceneEl = document.querySelector('a-scene');
 
-        // ボタンクリックで3Dモデルを表示
+        // ボタンクリックでhit-testを使い3Dモデルを表示
         button.addEventListener('click', function () {
             furniture.setAttribute('visible', true);
-        });
 
-        // Raycasterでオブジェクトをクリックしたときの動作
-        furniture.addEventListener('mousedown', function () {
-            isDragging = true;  // ドラッグ開始
-        });
-
-        window.addEventListener('mouseup', function () {
-            isDragging = false;  // ドラッグ終了
-        });
-
-        // マウスを移動したときにオブジェクトを追従させる
-        sceneEl.addEventListener('mousemove', function (event) {
-            if (isDragging) {
-                // マウスの位置を取得して家具の位置を更新
-                let intersection = sceneEl.components.cursor.getIntersection(furniture);
-                if (intersection) {
-                    let newPos = intersection.point;  // マウスの位置
-                    furniture.setAttribute('position', newPos);  // 家具の位置を更新
+            // ヒットテスト用のイベントリスナーを追加
+            document.querySelector('a-scene').addEventListener('onevent', function (event) {
+                let hits = event.detail.intersections;
+                if (hits.length > 0) {
+                    let position = hits[0].point;
+                    furniture.setAttribute('position', position);
                 }
-            }
+            });
         });
     </script>
 
