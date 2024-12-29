@@ -12,7 +12,12 @@
     <!-- A-Frameシーン -->
     <a-scene embedded arjs>
         <!-- 家具の3Dモデル -->
-        <a-entity id="simplelowtable" gltf-model="url(simplelowtable.glb)" scale="0.5 0.5 0.5" position="0 0 0" visible="false"></a-entity>
+        <a-entity id="simplelowtable" 
+                  gltf-model="url(simplelowtable.glb)" 
+                  scale="0.5 0.5 0.5" 
+                  position="0 0 -1" 
+                  visible="false">
+        </a-entity>
 
         <!-- カメラ -->
         <a-entity camera look-controls></a-entity>
@@ -20,25 +25,26 @@
 
     <!-- 家具を表示するボタン -->
     <button id="show-model-btn" style="position: absolute; top: 10px; left: 10px; z-index: 10;">
-        ローテーブル
+        Show Simple Low Table
     </button>
 
     <script>
         let button = document.getElementById('show-model-btn');
         let furniture = document.getElementById('simplelowtable');
-        let scene = document.querySelector('a-scene');
 
         // ボタンクリックで3Dモデルを表示
         button.addEventListener('click', function () {
+            // 3Dモデルを可視化
             furniture.setAttribute('visible', true);
         });
 
         // タップイベントで家具の位置を変更
-        scene.addEventListener('click', function (event) {
-            let touch = event.detail.intersection;
-            if (touch) {
-                let position = touch.point; // タップ位置を取得
-                furniture.setAttribute('position', position);
+        document.querySelector('a-scene').addEventListener('click', function (event) {
+            // A-Frameのクリックイベント詳細情報からタップ位置を取得
+            let intersection = event.detail.intersection;
+            if (intersection) {
+                let position = intersection.point; // タップ位置を取得
+                furniture.setAttribute('position', position); // 家具の位置を更新
             }
         });
     </script>
