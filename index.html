@@ -10,9 +10,16 @@
 <body style="margin: 0; padding: 0;">
 
     <!-- A-Frameシーン -->
-    <a-scene embedded arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3">
-        <!-- 家具の3Dモデル。初期状態では非表示 -->
-        <a-entity id="simplelowtable" gltf-model="url(simplelowtable.glb)" scale="1 1 1" position="0 0 -5" visible="false"></a-entity>
+    <a-scene
+        embedded
+        arjs="sourceType: camera; debugUIEnabled: false;">
+        <!-- 家具の3Dモデル -->
+        <a-entity 
+            id="simplelowtable"
+            gltf-model="url(./models/simplelowtable.glb)"
+            scale="0.5 0.5 0.5"
+            visible="false">
+        </a-entity>
 
         <!-- カメラ -->
         <a-entity camera></a-entity>
@@ -20,23 +27,25 @@
 
     <!-- 家具を表示するボタン -->
     <button id="show-model-btn" style="position: absolute; top: 10px; left: 10px; z-index: 10;">
-        Show Simple Low
+        シンプルなローテーブルを表示
     </button>
 
-    <!-- 家具の表示を制御するスクリプト -->
     <script>
-        // ボタンと3Dモデルの要素を取得
         let button = document.getElementById('show-model-btn');
         let furniture = document.getElementById('simplelowtable');
 
-        // デバッグ用：コンソールで確認
-        console.log("Furniture model:", furniture);
-        
-        // ボタンクリックで3Dモデルを表示
+        // ボタンクリックでhit-testを使い3Dモデルを表示
         button.addEventListener('click', function () {
-            // visible属性をtrueにしてモデルを表示
             furniture.setAttribute('visible', true);
-            console.log("Button clicked. Furniture is now visible.");
+
+            // ヒットテスト用のイベントリスナーを追加
+            document.querySelector('a-scene').addEventListener('onevent', function (event) {
+                let hits = event.detail.intersections;
+                if (hits.length > 0) {
+                    let position = hits[0].point;
+                    furniture.setAttribute('position', position);
+                }
+            });
         });
     </script>
 
