@@ -9,36 +9,58 @@
 </head>
 <body style="margin: 0; padding: 0;">
 
-    <!-- A-Frameシーン -->
-    <a-scene embedded arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3">
-        <!-- 家具の3Dモデル。初期状態では非表示 -->
-        <a-entity id="simplelowtable" gltf-model="url(simplelowtable.glb)" scale="1 1 1" position="0 0 -5" visible="false"></a-entity>
-
+    <a-scene webxr="optionalFeatures: hit-test;" xrweb="optionalFeatures: hit-test;" renderer="logarithmicDepthBuffer: true" embedded>
+        <!-- 平面検知用 -->
+        <a-entity id="reticle" geometry="primitive: ring; radiusInner: 0.05; radiusOuter: 0.1;"
+                  material="color: yellow; shader: flat;" position="0 0 -5" visible="false"></a-entity>
+    
+        <!-- 家具の3Dモデル -->
+        <a-entity id="simplelowtable" gltf-model="url(./models/simplelowtable.glb)" scale="0.5 0.5 0.5" visible="false"></a-entity>
+    
         <!-- カメラ -->
-        <a-entity camera></a-entity>
+        <a-entity camera look-controls></a-entity>
     </a-scene>
-
-    <!-- 家具を表示するボタン -->
-    <button id="show-model-btn" style="position: absolute; top: 10px; left: 10px; z-index: 10;">
-        Show Simple Low Table
-    </button>
-
-    <!-- 家具の表示を制御するスクリプト -->
+    
     <script>
-        // ボタンと3Dモデルの要素を取得
-        let button = document.getElementById('show-model-btn');
+        // 平面検知に必要な変数
+        let reticle = document.getElementById('reticle');
         let furniture = document.getElementById('simplelowtable');
-
-        // デバッグ用：コンソールで確認
-        console.log("Furniture model:", furniture);
-        
-        // ボタンクリックで3Dモデルを表示
-        button.addEventListener('click', function () {
-            // visible属性をtrueにしてモデルを表示
-            furniture.setAttribute('visible', true);
-            console.log("Button clicked. Furniture is now visible.");
+    
+        // ボタンで家具を平面検知位置に配置
+        document.getElementById('show-model-btn').addEventListener('click', () => {
+            if (reticle.getAttribute('visible')) {
+                const position = reticle.getAttribute('position');
+                furniture.setAttribute('position', position);
+                furniture.setAttribute('visible', true);
+            } else {
+                alert("平面を検知してください！");
+            }
+        });
+    
+        AFRAME.registerComponent('ar-hit-test', {
+            init: function () {
+                const sceneEl = this.el.sceneEl;
+                const xrSession = sceneEl.renderer.xr.getSession();
+    
+                xrSession.requestReferenceSpace('local').then(refSpace => {
+                    xrSession.addEventListener('select', () => {
+                        if (this.reticle.visible) {
+                            // 平面位置を取得して表示
+                            const hitTestResults = xrFrame.getHitTestResults(this.hitTestSource);
+                            if (hitTestResults.length > 0) {
+                                const pose = hitTestResults[0].getPose(refSpace);
+                                this.reticle.setAttribute('visible', true);
+                                this.reticle.setAttribute('position', {
+                                    x: pose.transform.position.x,
+                                    y: pose.transform.position.y,
+                                    z: pose.transform.position.z
+                                });
+                            }
+                        }
+                    });
+                });
+            }
         });
     </script>
-
 </body>
 </html>
