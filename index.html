@@ -45,6 +45,7 @@
         let reticle = document.getElementById('reticle');
         let furniture = document.getElementById('simplelowtable');
         let xrHitTestSource = null;
+        let hitTestSourceInitialized = false;
 
         // 平面検知とreticleの更新
         AFRAME.registerComponent('ar-hit-test', {
@@ -52,18 +53,26 @@
                 const sceneEl = this.el.sceneEl;
                 const xrSession = sceneEl.renderer.xr.getSession();
 
+                if (!xrSession) {
+                    console.error("XRSessionが初期化されていません。ブラウザやデバイスを確認してください。");
+                    return;
+                }
+
                 xrSession.requestReferenceSpace('viewer').then(refSpace => {
                     xrSession.requestHitTestSource({ space: refSpace }).then(source => {
                         xrHitTestSource = source;
+                        hitTestSourceInitialized = true;
+                        console.log("Hit test source initialized.");
                     });
                 });
 
-                this.el.sceneEl.addEventListener('enter-vr', () => {
-                    if (!xrSession) return;
-
-                    xrSession.addEventListener('select', () => {
-                        console.log('Session started.');
-                    });
+                // セッション終了時のクリーンアップ
+                sceneEl.addEventListener('exit-vr', () => {
+                    if (xrHitTestSource) {
+                        xrHitTestSource.cancel();
+                        xrHitTestSource = null;
+                        hitTestSourceInitialized = false;
+                    }
                 });
             },
             tick: function (time, delta) {
@@ -82,6 +91,7 @@
                         z: pose.transform.position.z
                     });
                     reticle.setAttribute('visible', true);
+                    console.log("Reticle updated:", pose.transform.position);
                 } else {
                     reticle.setAttribute('visible', false);
                 }
@@ -94,10 +104,13 @@
                 const position = reticle.getAttribute('position');
                 furniture.setAttribute('position', position);
                 furniture.setAttribute('visible', true);
+                console.log("家具を配置しました:", position);
             } else {
                 alert("平面を検知してください！");
+                console.error("平面が検知されていません。");
             }
         });
     </script>
+
 </body>
 </html>
