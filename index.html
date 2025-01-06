@@ -3,101 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markerless AR Furniture Placement</title>
+    <title>QR Code AR</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.min.js"></script>
-    <style>
-        #show-model-btn {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-    </style>
 </head>
 <body style="margin: 0; padding: 0;">
 
-    <a-scene embedded webxr="optionalFeatures: hit-test;" renderer="logarithmicDepthBuffer: true">
-        <a-entity id="reticle" 
-                  geometry="primitive: ring; radiusInner: 0.05; radiusOuter: 0.1;" 
-                  material="color: yellow; shader: flat;" 
-                  position="0 0 -5" 
-                  visible="false"></a-entity>
-
-        <a-entity id="simplelowtable" 
-                  gltf-model="url(./models/simplelowtable.glb)" 
-                  scale="0.5 0.5 0.5" 
-                  visible="false"></a-entity>
-
-        <a-entity camera look-controls></a-entity>
+    <!-- A-Frameシーン -->
+    <a-scene embedded arjs>
+        <!-- マーカー -->
+        <a-marker-camera preset="custom" type="pattern" url="path-to-your-marker.patt">
+            <!-- 家具の3Dモデル -->
+            <a-entity gltf-model="url(./models/simplelowtable.glb)" 
+                      scale="0.5 0.5 0.5" 
+                      position="0 0 0"></a-entity>
+        </a-marker-camera>
     </a-scene>
 
-    <button id="show-model-btn">家具を配置</button>
-
-    <script>
-        let reticle = document.getElementById('reticle');
-        let furniture = document.getElementById('simplelowtable');
-        let xrHitTestSource = null;
-
-        // 平面検知とreticleの更新
-        AFRAME.registerComponent('ar-hit-test', {
-            init: function () {
-                const sceneEl = this.el.sceneEl;
-                const xrSession = sceneEl.renderer.xr.getSession();
-
-                xrSession.requestReferenceSpace('viewer').then(refSpace => {
-                    xrSession.requestHitTestSource({ space: refSpace }).then(source => {
-                        xrHitTestSource = source;
-                    });
-                });
-
-                this.el.sceneEl.addEventListener('enter-vr', () => {
-                    if (!xrSession) return;
-
-                    xrSession.addEventListener('select', () => {
-                        console.log('Session started.');
-                    });
-                });
-            },
-            tick: function (time, delta) {
-                const xrSession = this.el.sceneEl.renderer.xr.getSession();
-                if (!xrSession || !xrHitTestSource) return;
-
-                const frame = this.el.sceneEl.frame;
-                const viewerSpace = xrSession.requestReferenceSpace('viewer');
-                const hitTestResults = frame.getHitTestResults(xrHitTestSource);
-
-                if (hitTestResults.length > 0) {
-                    const pose = hitTestResults[0].getPose(viewerSpace);
-                    reticle.setAttribute('position', {
-                        x: pose.transform.position.x,
-                        y: pose.transform.position.y,
-                        z: pose.transform.position.z
-                    });
-                    reticle.setAttribute('visible', true);
-                } else {
-                    reticle.setAttribute('visible', false);
-                }
-            }
-        });
-
-        // 家具配置ボタンの動作
-        document.getElementById('show-model-btn').addEventListener('click', () => {
-            if (reticle.getAttribute('visible')) {
-                const position = reticle.getAttribute('position');
-                furniture.setAttribute('position', position);
-                furniture.setAttribute('visible', true);
-            } else {
-                alert("平面を検知してください！");
-            }
-        });
-    </script>
 </body>
 </html>
